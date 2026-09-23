@@ -1,0 +1,1 @@
+This game is about making your way through many enemies and defeating tough opponents. But every time you want to level up, you need to answer 5 math questions. I want children who are having difficulties with math to have an exhilirating experience while they are studying
