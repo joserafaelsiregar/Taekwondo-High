@@ -1,0 +1,814 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Black+Ops+One&family=Noto+Sans+KR:wght@700;900&display=swap');
+
+:root {
+    --bg-dark: #07090e;
+    --primary: #e11d48;
+    --primary-glow: rgba(225, 29, 72, 0.4);
+    --secondary: #38bdf8;
+    --accent-yellow: #facc15;
+    --glass-bg: rgba(15, 23, 42, 0.82);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow: hidden;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#game-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    max-width: 1280px;
+    max-height: 720px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #000;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 40px rgba(225, 29, 72, 0.2);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: contain;
+}
+
+/* --- HUD OVERLAY --- */
+#hud-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 16px 24px;
+    z-index: 10;
+}
+
+.hud-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.hud-player-status {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--glass-border);
+    padding: 12px 18px;
+    border-radius: 14px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    min-width: 280px;
+}
+
+.hud-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.belt-badge {
+    font-weight: 800;
+    font-size: 0.85rem;
+    padding: 4px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.stat-bar-container {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.stat-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.bar-bg {
+    width: 100%;
+    height: 10px;
+    background: rgba(30, 41, 59, 0.8);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.bar-fill {
+    height: 100%;
+    transition: width 0.15s ease-out;
+    border-radius: 6px;
+}
+
+.hp-fill {
+    background: linear-gradient(90deg, #ef4444, #f43f5e);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+}
+
+.ki-fill {
+    background: linear-gradient(90deg, #0284c7, #38bdf8);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+}
+
+.xp-fill {
+    background: linear-gradient(90deg, #ca8a04, #facc15);
+}
+
+.hud-center-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.hud-wave-tag {
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 1.25rem;
+    color: var(--accent-yellow);
+    text-shadow: 0 0 12px rgba(250, 204, 21, 0.6);
+    background: var(--glass-bg);
+    padding: 6px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+}
+
+.hud-score-tag {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #e2e8f0;
+    letter-spacing: 1px;
+}
+
+/* Audio button */
+.hud-controls-btn {
+    pointer-events: auto;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: all 0.2s;
+}
+
+.hud-controls-btn:hover {
+    background: rgba(225, 29, 72, 0.25);
+    border-color: var(--primary);
+}
+
+/* --- COMBO STYLING --- */
+#hud-combo-container {
+    position: absolute;
+    right: 30px;
+    top: 100px;
+    text-align: right;
+    transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.combo-hits {
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 3.2rem;
+    color: #fff;
+    line-height: 1;
+    text-shadow: 0 0 20px var(--primary);
+}
+
+.combo-text {
+    font-size: 1rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: var(--accent-yellow);
+}
+
+.combo-grade {
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 2.2rem;
+    margin-top: -4px;
+}
+
+.grade-SSS { color: #e11d48; text-shadow: 0 0 15px #e11d48; }
+.grade-SS { color: #f59e0b; text-shadow: 0 0 12px #f59e0b; }
+.grade-S { color: #facc15; text-shadow: 0 0 10px #facc15; }
+.grade-A { color: #22c55e; }
+.grade-B { color: #38bdf8; }
+.grade-C { color: #cbd5e1; }
+.grade-D { color: #64748b; }
+
+/* --- HUD BOTTOM ACTION SLOTS --- */
+.hud-bottom {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.action-slot {
+    position: relative;
+    width: 68px;
+    height: 68px;
+    background: var(--glass-bg);
+    border: 2px solid var(--glass-border);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    backdrop-filter: blur(8px);
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.action-slot .slot-key {
+    font-size: 0.65rem;
+    font-weight: 900;
+    color: var(--accent-yellow);
+    background: rgba(0, 0, 0, 0.5);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-bottom: 2px;
+}
+
+.action-slot .slot-name {
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-align: center;
+    line-height: 1.1;
+    color: #f8fafc;
+}
+
+.action-slot .slot-cd {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 0%;
+    background: rgba(0, 0, 0, 0.7);
+    pointer-events: none;
+}
+
+.action-slot.slot-locked {
+    opacity: 0.35;
+    border-color: #334155;
+}
+
+.action-slot.no-ki {
+    border-color: #ef4444;
+    filter: grayscale(0.6);
+}
+
+/* --- ANNOUNCEMENT BANNER --- */
+#announcement-banner {
+    position: absolute;
+    top: 35%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 2.5rem;
+    color: #fff;
+    text-shadow: 0 0 25px rgba(225, 29, 72, 0.9);
+    background: rgba(15, 23, 42, 0.92);
+    padding: 16px 40px;
+    border-radius: 16px;
+    border: 2px solid var(--primary);
+    pointer-events: none;
+    z-index: 50;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.banner-animate {
+    animation: bannerPop 2.5s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes bannerPop {
+    0% { transform: translate(-50%, -50%) scale(0.6); opacity: 0; }
+    15% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; }
+    25% { transform: translate(-50%, -50%) scale(1.0); opacity: 1; }
+    85% { transform: translate(-50%, -50%) scale(1.0); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1.2); opacity: 0; }
+}
+
+/* --- MODALS & OVERLAYS --- */
+.modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(7, 9, 14, 0.85);
+    backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+.modal-content {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    padding: 36px 44px;
+    border-radius: 20px;
+    max-width: 580px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(225, 29, 72, 0.3);
+}
+
+.modal-title {
+    font-family: 'Black Ops One', sans-serif;
+    font-size: 2.2rem;
+    margin-bottom: 8px;
+    color: #fff;
+}
+
+.modal-subtitle {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin-bottom: 24px;
+}
+
+.btn-cta {
+    background: linear-gradient(135deg, #e11d48, #be123c);
+    color: #fff;
+    border: none;
+    padding: 14px 32px;
+    font-size: 1.1rem;
+    font-weight: 800;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 8px 25px rgba(225, 29, 72, 0.5);
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(225, 29, 72, 0.7);
+}
+
+/* --- ROGUELIKE PERK DRAFT CARDS --- */
+.perk-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 24px 0;
+}
+
+.perk-card {
+    background: rgba(30, 41, 59, 0.7);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.perk-card:hover {
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.6);
+}
+
+.perk-card.rarity-common { border-color: #94a3b8; }
+.perk-card.rarity-rare { border-color: #38bdf8; box-shadow: 0 0 15px rgba(56, 189, 248, 0.2); }
+.perk-card.rarity-epic { border-color: #a855f7; box-shadow: 0 0 18px rgba(168, 85, 247, 0.3); }
+.perk-card.rarity-legendary { border-color: #facc15; box-shadow: 0 0 22px rgba(250, 204, 21, 0.4); }
+
+.perk-card-icon {
+    font-size: 2.2rem;
+    margin-bottom: 8px;
+}
+
+.perk-card-title {
+    font-weight: 800;
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+    color: #fff;
+}
+
+.perk-card-rarity {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: var(--accent-yellow);
+    margin-bottom: 10px;
+}
+
+.perk-card-desc {
+    font-size: 0.78rem;
+    color: #cbd5e1;
+    line-height: 1.35;
+    flex-grow: 1;
+    margin-bottom: 14px;
+}
+
+.perk-choose-btn {
+    width: 100%;
+    padding: 8px 0;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+}
+
+.perk-card:hover .perk-choose-btn {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+/* --- BELT PROMOTION MODAL UPGRADE --- */
+.rankup-modal-card {
+    max-width: 680px !important;
+    padding: 28px 32px !important;
+    background: linear-gradient(175deg, rgba(20, 27, 45, 0.96) 0%, rgba(10, 14, 26, 0.98) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9), 0 0 40px rgba(225, 29, 72, 0.25) !important;
+    animation: modalPopIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes modalPopIn {
+    from { transform: scale(0.92); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.rankup-header-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.belt-rankup-icon {
+    font-size: 3.2rem;
+    line-height: 1;
+    filter: drop-shadow(0 0 15px rgba(250, 204, 21, 0.5));
+    animation: floatRotate 3s infinite ease-in-out;
+}
+
+@keyframes floatRotate {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-6px) rotate(5deg); }
+}
+
+.rankup-titles {
+    text-align: left;
+}
+
+.rankup-promo-tag {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: var(--accent-yellow);
+    margin-bottom: 2px;
+    text-shadow: 0 0 10px rgba(250, 204, 21, 0.4);
+}
+
+.rankup-korean-subtitle {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 1.05rem;
+    color: #94a3b8;
+    font-weight: 700;
+    margin-top: 2px;
+}
+
+.rankup-section-label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    color: #cbd5e1;
+    text-align: left;
+    margin: 14px 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Stat Boosts Grid */
+.rankup-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.rankup-stat-card {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 10px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.rankup-stat-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(250, 204, 21, 0.4);
+    background: rgba(30, 41, 59, 0.8);
+}
+
+.rankup-stat-icon {
+    font-size: 1.1rem;
+    margin-bottom: 2px;
+}
+
+.rankup-stat-val {
+    font-weight: 800;
+    font-size: 0.92rem;
+    color: #f8fafc;
+}
+
+.rankup-stat-sub {
+    font-size: 0.68rem;
+    color: #4ade80;
+    font-weight: 700;
+    margin-top: 2px;
+}
+
+/* Move Cards Showcase */
+.rankup-moves-showcase {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+    max-height: 240px;
+    overflow-y: auto;
+    padding: 4px 4px 6px 2px;
+    margin-bottom: 12px;
+}
+
+/* Custom Scrollbar for Moves Showcase */
+.rankup-moves-showcase::-webkit-scrollbar {
+    width: 6px;
+}
+.rankup-moves-showcase::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+}
+.rankup-moves-showcase::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.rankup-move-card {
+    background: rgba(24, 34, 53, 0.85);
+    border: 1px solid rgba(250, 204, 21, 0.35);
+    border-radius: 12px;
+    padding: 12px 14px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    transition: all 0.2s ease;
+}
+
+.rankup-move-card:hover {
+    border-color: var(--accent-yellow);
+    background: rgba(33, 46, 72, 0.95);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(250, 204, 21, 0.2);
+}
+
+.rankup-move-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 6px;
+    gap: 8px;
+}
+
+.rankup-move-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.rankup-move-icon {
+    font-size: 1.3rem;
+}
+
+.rankup-move-name {
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: #fff;
+    line-height: 1.2;
+}
+
+.rankup-move-korean {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.72rem;
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+.rankup-move-key {
+    background: rgba(250, 204, 21, 0.15);
+    color: var(--accent-yellow);
+    border: 1px solid rgba(250, 204, 21, 0.4);
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.rankup-move-desc {
+    font-size: 0.78rem;
+    color: #cbd5e1;
+    line-height: 1.35;
+    margin-bottom: 8px;
+}
+
+.rankup-move-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 0.72rem;
+    color: #94a3b8;
+    padding-top: 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Mastered Pills Summary */
+.rankup-mastered-summary {
+    text-align: left;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 16px;
+}
+
+.rankup-mastered-title {
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #64748b;
+    margin-bottom: 6px;
+}
+
+.rankup-mastered-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.rankup-mastered-pill {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: #94a3b8;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+
+.rankup-cta-btn {
+    width: 100%;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 1rem;
+    padding: 13px 24px;
+}
+
+.cta-arrow {
+    font-size: 1.1rem;
+    transition: transform 0.2s;
+}
+
+.rankup-cta-btn:hover .cta-arrow {
+    transform: translateX(4px);
+}
+
+@media (max-width: 650px) {
+    .rankup-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .rankup-moves-showcase {
+        grid-template-columns: 1fr;
+    }
+    .rankup-header-banner {
+        flex-direction: column;
+        text-align: center;
+        gap: 8px;
+    }
+    .rankup-titles {
+        text-align: center;
+    }
+}
+
+.controls-guide-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px 16px;
+    text-align: left;
+    margin: 18px 0;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 14px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+}
+
+.controls-guide-grid b {
+    color: var(--accent-yellow);
+}
+
+/* --- TOUCH CONTROLS FOR MOBILE --- */
+#mobile-touch-controls {
+    position: absolute;
+    bottom: 16px;
+    left: 0;
+    width: 100%;
+    display: none;
+    justify-content: space-between;
+    padding: 0 24px;
+    pointer-events: none;
+    z-index: 20;
+}
+
+@media (max-width: 900px), (hover: none) {
+    #mobile-touch-controls {
+        display: flex;
+    }
+}
+
+.touch-cluster {
+    display: flex;
+    gap: 12px;
+    pointer-events: auto;
+}
+
+.touch-btn {
+    width: 58px;
+    height: 58px;
+    background: var(--glass-bg);
+    border: 2px solid var(--glass-border);
+    border-radius: 50%;
+    color: #fff;
+    font-weight: 800;
+    font-size: 1.1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    touch-action: manipulation;
+    backdrop-filter: blur(6px);
+}
+
+.touch-btn:active {
+    background: var(--primary);
+    transform: scale(0.92);
+}
+
+.hidden {
+    display: none !important;
+}
